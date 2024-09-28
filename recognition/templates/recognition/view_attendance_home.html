@@ -1,0 +1,133 @@
+{% extends "recognition/Layout.html" %} {% load static %} {% block content %}
+
+<div class="row" style="padding-bottom: 0px; margin-bottom: 0px">
+  <!-- Left col -->
+  <section class="col-lg-12 connectedSortable">
+    <!-- Custom tabs (Charts with tabs)-->
+    <div class="card">
+      <div class="card-tools">
+        <ul class="nav nav-pills ml-auto">
+          <li class="nav-item">
+            <a class="nav-link active" href="{%url 'view-attendance-home' %}"
+              >Dashboard</a
+            >
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{%url 'view-attendance-employee' %}"
+              >Records by Student</a
+            >
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'view-attendance-date' %}"
+              >Records by Date</a
+            >
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <!-- Small boxes (Stat box) -->
+        <div class="row">
+          <div class="col-lg-6 col-6">
+            <!-- small box -->
+            <div class="small-box bg-info">
+              <div class="inner">
+                <h3>{{total_num_of_emp }}</h3>
+
+                <p>Total Number Of Students</p>
+              </div>
+              <div class="icon">
+                <i class="ion ion-bag"></i>
+              </div>
+              <a href="#" class="small-box-footer"
+                >More info <i class="fas fa-arrow-circle-right"></i
+              ></a>
+            </div>
+          </div>
+          <!-- ./col -->
+          <div class="col-lg-6 col-6">
+            <!-- small box -->
+            <div class="small-box bg-success">
+              <div class="inner">
+                <h3>{{emp_present_today }}</h3>
+
+                <p>Students Present Today</p>
+              </div>
+              <div class="icon">
+                <i class="ion ion-stats-bars"></i>
+              </div>
+              <a href="#" class="small-box-footer"
+                >More info <i class="fas fa-arrow-circle-right"></i
+              ></a>
+            </div>
+          </div>
+
+          <!-- ./col -->
+        </div>
+      </div>
+    </section>
+
+    <br />
+
+    <div class="row">
+      <!-- Left col -->
+      <section class="col-lg-12 connectedSortable">
+        <!-- Custom tabs (Charts with tabs)-->
+        <div class="card">
+          <div class="card-tools">
+            <ul class="nav nav-pills ml-auto">
+              <li class="nav-item">
+                <a
+                  class="nav-link active"
+                  href="#revenue-chart"
+                  data-toggle="tab"
+                  >This Week</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#sales-chart" data-toggle="tab"
+                  >Last Week</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div class="card-body" >
+            <div class="tab-content p-0 d-flex justify-content-center" >
+              <!-- Morris chart - Sales -->
+              
+              <div
+                class="chart tab-pane active"
+                id="revenue-chart"
+                style="position: relative; width:50%; height: auto"
+              >
+              
+                <img
+                  class="card-img-top"
+                  src="{% static 'recognition/img/attendance_graphs/this_week/1.png'%}"
+                  alt="Card image cap"
+                />
+              </div>
+              <div
+                class="chart tab-pane"
+                id="sales-chart"
+                style="position: relative; width:50%;height: auto"
+              >
+                <img
+                  class="card-img-top"
+                  src="{% static 'recognition/img/attendance_graphs/last_week/1.png'%}"
+                  alt="Card image cap"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </section>
+</div>
+
+{% endblock content %}

@@ -1,0 +1,172 @@
+{% extends "recognition/view_attendance_home.html" %} 
+
+
+ 
+ {% load static %}
+ {% load crispy_forms_tags %}
+
+ {% block content %}
+
+ <style id = "table_style" type="text/css">
+  body
+  {
+      font-family: Arial;
+      font-size: 10pt;
+  }
+  table
+  {
+      border: 1px solid #ccc;
+      border-collapse: collapse;
+  }
+  table th
+  {
+      background-color: #F7F7F7;
+      color: #333;
+      font-weight: bold;
+  }
+  table th, table td
+  {
+      padding: 5px;
+      border: 1px solid #ccc;
+  }
+</style>
+
+ <div class="row" style="padding-bottom: 0px; margin-bottom: 0px">
+  <!-- Left col -->
+  <section class="col-lg-12 connectedSortable">
+    <!-- Custom tabs (Charts with tabs)-->
+    <div class="card">
+      <div class="card-tools">
+        <ul class="nav nav-pills ml-auto">
+          <li class="nav-item">
+            <a class="nav-link " href="{%url 'view-attendance-home' %}"
+              >dashboard</a
+            >
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" href="{%url 'view-attendance-employee' %}"
+              >Records by Student</a
+            >
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'view-attendance-date' %}"
+              >Records by Date</a
+            >
+          </li>
+        </ul>
+      </div>
+    </div>
+
+
+<div class="container">
+  <div style="width:400px;">
+
+ <form method="POST" >
+      {% csrf_token %}
+      <fieldset class="form-group">
+        <legend class="border-bottom mb-4"> Select Username And Duration </legend>
+        {{form| crispy}}
+      </fieldset>
+
+      <div class="form-group">
+        <button class="btn btn-outline-info" type="submit"> Submit</button>
+      </div>
+    </form>
+
+</div>
+<div id="printing">
+{%if qs%}
+<table class="table "  style="margin-top: 5em;">
+    <thead class="thead-dark">
+    <tr>
+        <th scope="col">Date</th>
+        
+        <th scope="col" >Student</th>
+        <th scope="col">Present</th>
+        <th scope="col">Time in</th>
+        <th scope="col">Time out </th>
+         <th scope="col">Hours </th>
+          <th scope="col"> Break Hours </th>
+    </tr>
+</thead>
+<tbody>
+    {% for item in qs %}
+    <tr> 
+           <td>{{ item.date }}</td>
+        <td>{{ item.user.username}}</td>
+     
+         {% if item.present %}
+        <td> P </td>
+        {% else %}
+        <td> A </td>
+        {% endif %}
+        {% if item.time_in %}
+        <td>{{ item.time_in }}</td>
+       {% else %}
+       <td> - </td>
+       {% endif %}
+         {% if item.time_out %}
+        <td>{{ item.time_out }}</td>
+       {% else %}
+       <td> - </td>
+       {% endif %}
+       <td> {{item.hours}}</td>
+          <td> {{item.break_hours}}</td>
+    </tr>
+    {% endfor %}
+</tbody>
+</table>
+</div>
+<input type="button" onclick="PrintTable();" value="Print" />
+
+ <div class="card" style=" margin-top: 5em; margin-bottom: 10em;">
+  <img class="card-img-top" src="{% static 'recognition/img/attendance_graphs/hours_vs_date/1.png'%}" alt="Card image cap">
+  <div class="card-body">
+    <p class="card-text" style="text-align: center;">Number of hours worked each day.</p>
+  </div>
+</div>
+
+{% endif %}
+
+
+ {% if messages %}
+      {% for message in messages%}
+      <div class="alert alert-{{message.tags}}" > {{message}}
+      </div>
+      {%endfor %}
+
+    {%endif%}
+
+</div>
+
+ 
+<script type="text/javascript">
+  function PrintTable() {
+      var printWindow = window.open('', '', 'height=auto,width=100%');
+      printWindow.document.write('<html><head><title>Table Contents</title>');
+
+      //Print the Table CSS.
+      var table_style = document.getElementById("table_style").innerHTML;
+      printWindow.document.write('<style type = "text/css">');
+      printWindow.document.write(table_style);
+      printWindow.document.write('</style>');
+      printWindow.document.write('</head>');
+
+      //Print the DIV contents ie. the HTML Table.
+      printWindow.document.write('<body>');
+      var divContents = document.getElementById("printing").innerHTML;
+      printWindow.document.write(divContents);
+      printWindow.document.write('</body>');
+
+      printWindow.document.write('</html>');
+      printWindow.document.close();
+      printWindow.print();
+  }
+</script>
+
+ </body>
+
+</section>
+</div>
+ 
+{% endblock content %}

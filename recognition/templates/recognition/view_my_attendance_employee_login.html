@@ -1,0 +1,119 @@
+
+
+{% extends "recognition/StudentsLayout.html" %} 
+
+{% block content %}
+<!-- {% load static %} -->
+ {% load crispy_forms_tags %}
+
+
+
+<body>
+
+   <nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" href="{%url 'view-my-attendance-employee-login' %}">Attendance</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNav">
+    <ul class="navbar-nav">
+     
+     
+
+
+         <li class="nav-item active" style="padding-left: 1740px">
+        <a class="nav-link" href="{% url 'dashboard' %}">Back to Dashboard</a>
+      </li>
+  
+    </ul>
+  </div>
+</nav>
+
+
+	<div class="container">
+  <div style="width:400px;">
+
+ <form method="POST" >
+      {% csrf_token %}
+      <fieldset class="form-group">
+        <legend class="border-bottom mb-4"> Select Duration </legend>
+        {{form| crispy}}
+      </fieldset>
+
+      <div class="form-group">
+        <button class="btn btn-outline-info" type="submit"> Submit</button>
+      </div>
+    </form>
+
+</div>
+
+{%if qs%}
+<table class="table"  style="margin-top: 5em;">
+    <thead class="thead-dark">
+    <tr>
+        <th scope="col">Date</th>
+        
+        <th scope="col" >Employee</th>
+        <th scope="col">Present</th>
+        <th scope="col">Time in</th>
+        <th scope="col">Time out </th>
+         <th scope="col">Hours </th>
+         <th scope="col"> Break Hours </th>
+    </tr>
+</thead>
+<tbody>
+    {% for item in qs %}
+    <tr> 
+           <td>{{ item.date }}</td>
+        <td>{{ item.user.username}}</td>
+     
+         {% if item.present %}
+        <td> P </td>
+        {% else %}
+        <td> A </td>
+        {% endif %}
+        {% if item.time_in %}
+        <td>{{ item.time_in }}</td>
+       {% else %}
+       <td> - </td>
+       {% endif %}
+         {% if item.time_out %}
+        <td>{{ item.time_out }}</td>
+       {% else %}
+       <td> - </td>
+       {% endif %}
+       <td> {{item.hours}}</td>
+          <td> {{item.break_hours}}</td>
+    </tr>
+    {% endfor %}
+</tbody>
+</table>
+
+ <div class="card" style=" margin-top: 5em; margin-bottom: 10em;">
+  <img class="card-img-top" src="{% static 'recognition/img/attendance_graphs/employee_login/1.png'%}" alt="Card image cap">
+  <div class="card-body">
+    <p class="card-text" style="text-align: center;">Number of hours worked each day.</p>
+  </div>
+</div>
+
+
+{% endif %}
+
+
+
+ {% if messages %}
+      {% for message in messages%}
+      <div class="alert alert-{{message.tags}}" > {{message}}
+      </div>
+      {%endfor %}
+
+    {%endif%}
+
+</div>
+
+
+
+	</body>
+
+
+{% endblock content %}
