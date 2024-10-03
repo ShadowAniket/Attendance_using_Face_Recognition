@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=c:\Users\Aniket\Desktop\MiniP2A\Face_Recog_Attendance\.venv
+set VIRTUAL_ENV=C:\Users\Aniket\Desktop\MiniP2A\Face_Recog_Attendance\.venv
 
 if not defined PROMPT set PROMPT=$P$G
 

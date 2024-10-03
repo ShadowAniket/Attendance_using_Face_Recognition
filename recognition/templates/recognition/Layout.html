@@ -3,17 +3,14 @@
 {% load static %}
 
 <!DOCTYPE html>
-<!--
-This is a starter template page. Use this page to start your new project from
-scratch. This page gets rid of all links and provides the needed markup only.
--->
+
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
 
-  <title>APSIT COLLEGE</title>
+  <title>APSIT COLLEGE ATTENDANCE</title>
 
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="{% static 'plugins/fontawesome-free/css/all.min.css' %}">
@@ -96,7 +93,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
             <a href="{%url 'add-photos'%}" class="nav-link">
               <i class="fas fa-record-vinyl"></i>
               <p>
-                Get Dataset of New Student
+                Update Dataset of Student
                 
               </p>
             </a>
@@ -127,7 +124,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
          
           {% block content %}
           <div class="col-sm-12 d-flex align-items-center justify-content-center">
-            <b>Welcome to the your Dashboard</b>
+            <b>Welcome to the admin Dashboard</b>
             
         </div>
         <div class="col-sm-12 d-flex align-items-center justify-content-center">
@@ -162,7 +159,13 @@ scratch. This page gets rid of all links and provides the needed markup only.
     <!-- To the right -->
   
     <!-- Default to the left -->
-    <p>AUTOMATED STUDENT ATTENDANCE SYSTEM USING FACE RECOGNITION</p>
+    <p>STUDENT ATTENDANCE SYSTEM USING FACE RECOGNITION</p>
+    <p>
+      Created by: 
+      <a href="https://github.com/ShadowAniket" target="_blank">
+        <i class="fab fa-github"></i> @ShadowAniket
+      </a>
+    </p>
   </footer>
 </div>
 <!-- ./wrapper -->

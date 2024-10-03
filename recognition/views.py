@@ -49,15 +49,12 @@ def create_dataset(username):
 		os.makedirs('face_recognition_data/training_dataset/{}/'.format(id))
 	directory='face_recognition_data/training_dataset/{}/'.format(id)
 
-	#print("[INFO] Loading the facial detector")
 	detector = dlib.get_frontal_face_detector()
 	predictor = dlib.shape_predictor('face_recognition_data/shape_predictor_68_face_landmarks.dat')   #Add path to the shape predictor ######CHANGE TO RELATIVE PATH LATER
 	fa = FaceAligner(predictor , desiredFaceWidth = 96)
-	#print("[INFO] Initializing Video stream")
 	vs = VideoStream(src=0).start()
 	#time.sleep(2.0) ####CHECK######
 	sampleNum = 0
-	# Capturing the faces one by one and detect the faces and showing it on the window
 	while(True):
 		frame = vs.read()
 		frame = imutils.resize(frame ,width = 800)

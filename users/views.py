@@ -41,7 +41,7 @@ def register(request):
 		form=UserCreationForm(request.POST)
 		if form.is_valid():
 			form.save() ###add user to database
-			messages.success(request, f'Employee registered successfully!')
+			messages.success(request, f'User registered successfully!')
 			return redirect('dashboard')
 		
 
@@ -58,7 +58,7 @@ def register2(request):
 		form=UserCreationForm(request.POST)
 		if form.is_valid():
 			form.save() ###add user to database
-			messages.success(request, f'Employee registered successfully!')
+			messages.success(request, f'User registered successfully!')
 			return redirect('dashboard2')
 		
 
