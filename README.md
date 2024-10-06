@@ -18,11 +18,13 @@
 - **Responsive Web Interface**: Manage and view attendance data via a Django-based web interface.
 
 ## Technologies Used
-- **Python 3.8.x**
-- **OpenCV**: For capturing and processing facial images.
-- **dlib**: For face detection and recognition.
-- **Django**: Web framework used to create the interface and handle database interactions.
-- **SQLite**: Lightweight database to store user and attendance data.
+
+![Python](https://img.shields.io/badge/Python-3.8-blue?style=for-the-badge&logo=python)
+![OpenCV](https://img.shields.io/badge/OpenCV-4.x-green?style=for-the-badge&logo=opencv)
+![dlib](https://img.shields.io/badge/dlib-Face%20Recognition-orange?style=for-the-badge)
+![Django](https://img.shields.io/badge/Django-3.x-green?style=for-the-badge&logo=django)
+![SQLite](https://img.shields.io/badge/SQLite-3-lightgrey?style=for-the-badge&logo=sqlite)
+
 
 ## Installation
 
