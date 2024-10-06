@@ -34,8 +34,8 @@
 
 2. **Set up the virtual environment:**
    ```bash
-   python3 -m venv env
-   source env/bin/activate  # On Windows: .\env\Scripts\activate
+   python3 -m venv env      # On Windows: py -3.8 -m venv .venv
+   source env/bin/activate  # On Windows: .\.venv\Scripts\activate
    ```
 
 3. **Install the required dependencies:**
