@@ -83,4 +83,5 @@ For more detailed guidelines, see the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+If you find this project useful, please give it a ⭐ and fork it to contribute!
 ---
