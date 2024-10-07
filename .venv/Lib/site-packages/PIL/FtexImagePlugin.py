@@ -51,14 +51,20 @@ bytes for that mipmap level.
 Note: All data is stored in little-Endian (Intel) byte order.
 """
 
+from __future__ import annotations
+
 import struct
+from enum import IntEnum
 from io import BytesIO
 
 from . import Image, ImageFile
 
 MAGIC = b"FTEX"
-FORMAT_DXT1 = 0
-FORMAT_UNCOMPRESSED = 1
+
+
+class Format(IntEnum):
+    DXT1 = 0
+    UNCOMPRESSED = 1
 
 
 class FtexImageFile(ImageFile.ImageFile):
@@ -66,12 +72,14 @@ class FtexImageFile(ImageFile.ImageFile):
     format_description = "Texture File Format (IW2:EOC)"
 
     def _open(self):
-        struct.unpack("<I", self.fp.read(4))  # magic
+        if not _accept(self.fp.read(4)):
+            msg = "not an FTEX file"
+            raise SyntaxError(msg)
         struct.unpack("<i", self.fp.read(4))  # version
         self._size = struct.unpack("<2i", self.fp.read(8))
         mipmap_count, format_count = struct.unpack("<2i", self.fp.read(8))
 
-        self.mode = "RGB"
+        self._mode = "RGB"
 
         # Only support single-format files.
         # I don't know of any multi-format file.
@@ -83,13 +91,14 @@ class FtexImageFile(ImageFile.ImageFile):
 
         data = self.fp.read(mipmap_size)
 
-        if format == FORMAT_DXT1:
-            self.mode = "RGBA"
-            self.tile = [("bcn", (0, 0) + self.size, 0, (1))]
-        elif format == FORMAT_UNCOMPRESSED:
+        if format == Format.DXT1:
+            self._mode = "RGBA"
+            self.tile = [("bcn", (0, 0) + self.size, 0, 1)]
+        elif format == Format.UNCOMPRESSED:
             self.tile = [("raw", (0, 0) + self.size, 0, ("RGB", 0, 1))]
         else:
-            raise ValueError(f"Invalid texture compression format: {repr(format)}")
+            msg = f"Invalid texture compression format: {repr(format)}"
+            raise ValueError(msg)
 
         self.fp.close()
         self.fp = BytesIO(data)
@@ -98,9 +107,9 @@ class FtexImageFile(ImageFile.ImageFile):
         pass
 
 
-def _validate(prefix):
+def _accept(prefix):
     return prefix[:4] == MAGIC
 
 
-Image.register_open(FtexImageFile.format, FtexImageFile, _validate)
+Image.register_open(FtexImageFile.format, FtexImageFile, _accept)
 Image.register_extensions(FtexImageFile.format, [".ftc", ".ftu"])

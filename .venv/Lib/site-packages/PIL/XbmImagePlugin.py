@@ -18,24 +18,26 @@
 #
 # See the README file for information on usage and redistribution.
 #
+from __future__ import annotations
 
 import re
+from typing import IO
 
 from . import Image, ImageFile
 
 # XBM header
 xbm_head = re.compile(
-    br"\s*#define[ \t]+.*_width[ \t]+(?P<width>[0-9]+)[\r\n]+"
+    rb"\s*#define[ \t]+.*_width[ \t]+(?P<width>[0-9]+)[\r\n]+"
     b"#define[ \t]+.*_height[ \t]+(?P<height>[0-9]+)[\r\n]+"
     b"(?P<hotspot>"
     b"#define[ \t]+[^_]*_x_hot[ \t]+(?P<xhot>[0-9]+)[\r\n]+"
     b"#define[ \t]+[^_]*_y_hot[ \t]+(?P<yhot>[0-9]+)[\r\n]+"
     b")?"
-    b"[\\000-\\377]*_bits\\[\\]"
+    rb"[\000-\377]*_bits\[]"
 )
 
 
-def _accept(prefix):
+def _accept(prefix: bytes) -> bool:
     return prefix.lstrip()[:7] == b"#define"
 
 
@@ -44,32 +46,34 @@ def _accept(prefix):
 
 
 class XbmImageFile(ImageFile.ImageFile):
-
     format = "XBM"
     format_description = "X11 Bitmap"
 
-    def _open(self):
+    def _open(self) -> None:
+        assert self.fp is not None
 
         m = xbm_head.match(self.fp.read(512))
 
-        if m:
+        if not m:
+            msg = "not a XBM file"
+            raise SyntaxError(msg)
 
-            xsize = int(m.group("width"))
-            ysize = int(m.group("height"))
+        xsize = int(m.group("width"))
+        ysize = int(m.group("height"))
 
-            if m.group("hotspot"):
-                self.info["hotspot"] = (int(m.group("xhot")), int(m.group("yhot")))
+        if m.group("hotspot"):
+            self.info["hotspot"] = (int(m.group("xhot")), int(m.group("yhot")))
 
-            self.mode = "1"
-            self._size = xsize, ysize
+        self._mode = "1"
+        self._size = xsize, ysize
 
-            self.tile = [("xbm", (0, 0) + self.size, m.end(), None)]
+        self.tile = [("xbm", (0, 0) + self.size, m.end(), None)]
 
 
-def _save(im, fp, filename):
-
+def _save(im: Image.Image, fp: IO[bytes], filename: str) -> None:
     if im.mode != "1":
-        raise OSError(f"cannot write mode {im.mode} as XBM")
+        msg = f"cannot write mode {im.mode} as XBM"
+        raise OSError(msg)
 
     fp.write(f"#define im_width {im.size[0]}\n".encode("ascii"))
     fp.write(f"#define im_height {im.size[1]}\n".encode("ascii"))

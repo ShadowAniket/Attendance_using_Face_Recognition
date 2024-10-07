@@ -20,6 +20,7 @@
 #
 # See the README file for information on usage and redistribution.
 #
+from __future__ import annotations
 
 from . import Image
 from ._binary import i32le as i32
@@ -37,17 +38,16 @@ def _accept(prefix):
 
 
 class DcxImageFile(PcxImageFile):
-
     format = "DCX"
     format_description = "Intel DCX"
     _close_exclusive_fp_after_loading = False
 
     def _open(self):
-
         # Header
         s = self.fp.read(4)
         if not _accept(s):
-            raise SyntaxError("not a DCX file")
+            msg = "not a DCX file"
+            raise SyntaxError(msg)
 
         # Component directory
         self._offset = []
@@ -57,7 +57,7 @@ class DcxImageFile(PcxImageFile):
                 break
             self._offset.append(offset)
 
-        self.__fp = self.fp
+        self._fp = self.fp
         self.frame = None
         self.n_frames = len(self._offset)
         self.is_animated = self.n_frames > 1
@@ -67,21 +67,12 @@ class DcxImageFile(PcxImageFile):
         if not self._seek_check(frame):
             return
         self.frame = frame
-        self.fp = self.__fp
+        self.fp = self._fp
         self.fp.seek(self._offset[frame])
         PcxImageFile._open(self)
 
     def tell(self):
         return self.frame
-
-    def _close__fp(self):
-        try:
-            if self.__fp != self.fp:
-                self.__fp.close()
-        except AttributeError:
-            pass
-        finally:
-            self.__fp = None
 
 
 Image.register_open(DcxImageFile.format, DcxImageFile, _accept)

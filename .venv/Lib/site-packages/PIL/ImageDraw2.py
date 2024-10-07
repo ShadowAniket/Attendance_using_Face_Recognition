@@ -22,7 +22,7 @@
 
 .. seealso:: :py:mod:`PIL.ImageDraw`
 """
-
+from __future__ import annotations
 
 from . import Image, ImageColor, ImageDraw, ImageFont, ImagePath
 
@@ -170,10 +170,24 @@ class Draw:
             xy.transform(self.transform)
         self.draw.text(xy, text, font=font.font, fill=font.color)
 
-    def textsize(self, text, font):
+    def textbbox(self, xy, text, font):
         """
-        Return the size of the given string, in pixels.
+        Returns bounding box (in pixels) of given text.
 
-        .. seealso:: :py:meth:`PIL.ImageDraw.ImageDraw.textsize`
+        :return: ``(left, top, right, bottom)`` bounding box
+
+        .. seealso:: :py:meth:`PIL.ImageDraw.ImageDraw.textbbox`
         """
-        return self.draw.textsize(text, font=font.font)
+        if self.transform:
+            xy = ImagePath.Path(xy)
+            xy.transform(self.transform)
+        return self.draw.textbbox(xy, text, font=font.font)
+
+    def textlength(self, text, font):
+        """
+        Returns length (in pixels) of given text.
+        This is the amount by which following text should be offset.
+
+        .. seealso:: :py:meth:`PIL.ImageDraw.ImageDraw.textlength`
+        """
+        return self.draw.textlength(text, font=font.font)

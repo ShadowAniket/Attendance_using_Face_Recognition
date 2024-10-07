@@ -12,13 +12,16 @@ from scipy._lib._util import _asarray_validated
 
 
 # Local imports
-from .misc import norm
+from ._misc import norm
 from .lapack import ztrsyl, dtrsyl
-from .decomp_schur import schur, rsf2csf
+from ._decomp_schur import schur, rsf2csf
 
 
 class SqrtmError(np.linalg.LinAlgError):
     pass
+
+
+from ._matfuncs_sqrtm_triu import within_block_loop
 
 
 def _sqrtm_triu(T, blocksize=64):
@@ -49,8 +52,15 @@ def _sqrtm_triu(T, blocksize=64):
     """
     T_diag = np.diag(T)
     keep_it_real = np.isrealobj(T) and np.min(T_diag) >= 0
+
+    # Cast to complex as necessary + ensure double precision
     if not keep_it_real:
-        T_diag = T_diag.astype(complex)
+        T = np.asarray(T, dtype=np.complex128, order="C")
+        T_diag = np.asarray(T_diag, dtype=np.complex128)
+    else:
+        T = np.asarray(T, dtype=np.float64, order="C")
+        T_diag = np.asarray(T_diag, dtype=np.float64)
+
     R = np.diag(np.sqrt(T_diag))
 
     # Compute the number of blocks to use; use at least one block.
@@ -73,23 +83,13 @@ def _sqrtm_triu(T, blocksize=64):
             start_stop_pairs.append((start, start + size))
             start += size
 
-    # Within-block interactions.
-    for start, stop in start_stop_pairs:
-        for j in range(start, stop):
-            for i in range(j-1, start-1, -1):
-                s = 0
-                if j - i > 1:
-                    s = R[i, i+1:j].dot(R[i+1:j, j])
-                denom = R[i, i] + R[j, j]
-                num = T[i, j] - s
-                if denom != 0:
-                    R[i, j] = (T[i, j] - s) / denom
-                elif denom == 0 and num == 0:
-                    R[i, j] = 0
-                else:
-                    raise SqrtmError('failed to find the matrix square root')
+    # Within-block interactions (Cythonized)
+    try:
+        within_block_loop(R, T, start_stop_pairs, nblocks)
+    except RuntimeError as e:
+        raise SqrtmError(*e.args) from e
 
-    # Between-block interactions.
+    # Between-block interactions (Cython would give no significant speedup)
     for j in range(nblocks):
         jstart, jstop = start_stop_pairs[j]
         for i in range(j-1, -1, -1):
@@ -132,7 +132,11 @@ def sqrtm(A, disp=True, blocksize=64):
     Returns
     -------
     sqrtm : (N, N) ndarray
-        Value of the sqrt function at `A`
+        Value of the sqrt function at `A`. The dtype is float or complex.
+        The precision (data size) is determined based on the precision of
+        input `A`. When the dtype is float, the precision is same as `A`.
+        When the dtype is complex, the precition is double as `A`. The
+        precision might be cliped by each dtype precision range.
 
     errest : float
         (if disp == False)
@@ -147,6 +151,7 @@ def sqrtm(A, disp=True, blocksize=64):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from scipy.linalg import sqrtm
     >>> a = np.array([[1.0, 3.0], [1.0, 4.0]])
     >>> r = sqrtm(a)
@@ -158,6 +163,7 @@ def sqrtm(A, disp=True, blocksize=64):
            [ 1.,  4.]])
 
     """
+    byte_size = np.asarray(A).dtype.itemsize
     A = _asarray_validated(A, check_finite=True, as_inexact=True)
     if len(A.shape) != 2:
         raise ValueError("Non-matrix input to matrix function.")
@@ -175,6 +181,16 @@ def sqrtm(A, disp=True, blocksize=64):
         R = _sqrtm_triu(T, blocksize=blocksize)
         ZH = np.conjugate(Z).T
         X = Z.dot(R).dot(ZH)
+        if not np.iscomplexobj(X):
+            # float byte size range: f2 ~ f16
+            X = X.astype(f"f{np.clip(byte_size, 2, 16)}", copy=False)
+        else:
+            # complex byte size range: c8 ~ c32.
+            # c32(complex256) might not be supported in some environments.
+            if hasattr(np, 'complex256'):
+                X = X.astype(f"c{np.clip(byte_size*2, 8, 32)}", copy=False)
+            else:
+                X = X.astype(f"c{np.clip(byte_size*2, 8, 16)}", copy=False)
     except SqrtmError:
         failflag = True
         X = np.empty_like(A)
