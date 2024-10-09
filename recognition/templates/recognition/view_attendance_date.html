@@ -85,7 +85,6 @@
 
 
 
-
 <div class="container">
   <div style="width: 400px">
  <form method="POST" >
@@ -104,48 +103,39 @@
 </div>
 
 <div id="printing">
-{% if qs %}
-
-<table  class="table" style="margin-top: 5em; ">
-    <thead class="thead-dark">
-    <tr>
-        <th scope="col">Date</th>
-        
-        <th scope="col" >User</th>
-        <th scope="col">Present</th>
-        <th scope="col">Time in</th>
-        <th scope="col">Time out </th>
-        <th scope="col">Hours </th>
-        <th scope="col"> Break Hours </th>
-    </tr>
-</thead>
-<tbody>
-    {% for item in qs %}
-    <tr> 
-           <td>{{ item.date }}</td>
-        <td>{{ item.user.username}}</td>
-     {% if item.present %}
-        <td> P </td>
-        {% else %}
-        <td> A </td>
-        {% endif %}
-        {% if item.time_in %}
-        <td>{{ item.time_in }}</td>
-       {% else %}
-       <td> - </td>
-       {% endif %}
-         {% if item.time_out %}
-        <td>{{ item.time_out }}</td>
-       {% else %}
-       <td> - </td>
-       {% endif %}
-           <td> {{item.hours}}</td>
-           <td> {{item.break_hours}}</td>
-    </tr>
-    {% endfor %}
-</tbody>
-</table>
-</div>
+  {% if qs %}
+      <table class="table" style="margin-top: 5em;">
+          <thead class="thead-dark">
+              <tr>
+                  <th scope="col">Date</th>
+                  <th scope="col">User</th>
+                  <th scope="col">Present</th>
+                  <th scope="col">Time In</th>
+                  <th scope="col">Time Out</th>
+                  <th scope="col">Hours</th>
+                  <th scope="col">Break Hours</th>
+              </tr>
+          </thead>
+          <tbody>
+              {% for item in qs %}
+              <tr>
+                  <td>{{ item.date }}</td>
+                  <td>{{ item.user.username }}</td>  
+                  {% if item.present %}
+                      <td>P</td>
+                  {% else %}
+                      <td>A</td>
+                  {% endif %}
+                  <td>{{ item.time_in|default:"-" }}</td>
+                  <td>{{ item.time_out|default:"-" }}</td>  
+                  <td>{{ item.hours|default:"-" }}</td>
+                  <td>{{ item.break_hours|default:"-" }}</td>
+              </tr>
+              {% endfor %}
+          </tbody>
+      </table>
+  </div>
+  
 <input type="button" onclick="PrintTable();" value="Print" />
 
 

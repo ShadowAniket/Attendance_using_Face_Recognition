@@ -34,13 +34,15 @@ import matplotlib.pyplot as plt
 from pandas.plotting import register_matplotlib_converters
 from matplotlib import rcParams
 import math
+from scipy.spatial import distance as dist
+import mediapipe as mp
 
 mpl.use('Agg')
 
+
 def username_present(username):
 	if User.objects.filter(username=username).exists():
-		return True
-	
+		return True	
 	return False
 
 def create_dataset(username):
@@ -105,71 +107,77 @@ def vizualize_Data(embedded, targets,):
 	plt.savefig('./recognition/static/recognition/img/training_visualisation.png')
 	plt.close()
 
+
 def update_attendance_in_db_in(present):
-	today=datetime.date.today()
-	time=datetime.datetime.now()
-	for person in present:
-		user=User.objects.get(username=person)
-		try:
-			qs=Present.objects.get(user=user,date=today)
-		except :
-			qs= None
-		if qs is None:
-			if present[person]==True:
-						a=Present(user=user,date=today,present=True)
-						a.save()
-			else:
-				a=Present(user=user,date=today,present=False)
-				a.save()
-		else:
-			if present[person]==True:
-				qs.present=True
-				qs.save(update_fields=['present'])
-		if present[person]==True:
-			a=Time(user=user,date=today,time=time, out=False)
-			a.save()
+    today = datetime.date.today()
+    time = datetime.datetime.now()
+    
+    for person in present:
+        user = User.objects.get(username=person)
+        
+        try:
+            qs = Present.objects.get(user=user, date=today)
+        except Present.DoesNotExist:
+            qs = None
+            
+        if qs is None:
+            if present[person] == True:
+                a = Present(user=user, date=today, present=True)
+                a.save()
+            else:
+                a = Present(user=user, date=today, present=False)
+                a.save()
+        else:
+            if present[person] == True:
+                qs.present = True
+                qs.save(update_fields=['present'])
+                
+        if present[person] == True:
+            a = Time(user=user, date=today, time=time, out=False)
+            a.save()
+
+
+
 
 def update_attendance_in_db_out(present):
-	today=datetime.date.today()
-	time=datetime.datetime.now()
-	for person in present:
-		user=User.objects.get(username=person)
-		if present[person]==True:
-			a=Time(user=user,date=today,time=time, out=True)
-			a.save()
-		
+    today = datetime.date.today()
+    time_now = datetime.datetime.now()    
+    for person in present:
+        if present[person] == True:
+            user = User.objects.get(username=person)
+            last_entry = Time.objects.filter(user=user, date=today, out=False).order_by('-time').first()            
+            if last_entry:
+                last_entry.out = True
+                last_entry.time = time_now
+                last_entry.save(update_fields=['out', 'time'])
+            else:
+                new_entry = Time(user=user, date=today, time=time_now, out=True)
+                new_entry.save()
+
+
 def check_validity_times(times_all):
-	if(len(times_all)>0):
-		sign=times_all.first().out
-	else:
-		sign=True
-	times_in=times_all.filter(out=False)
-	times_out=times_all.filter(out=True)
-	if(len(times_in)!=len(times_out)):
-		sign=True
-	break_hourss=0
-	if(sign==True):
-			check=False
-			break_hourss=0
-			return (check,break_hourss)
-	prev=True
-	prev_time=times_all.first().time
-	for obj in times_all:
-		curr=obj.out
-		if(curr==prev):
-			check=False
-			break_hourss=0
-			return (check,break_hourss)
-		if(curr==False):
-			curr_time=obj.time
-			to=curr_time
-			ti=prev_time
-			break_time=((to-ti).total_seconds())/3600
-			break_hourss+=break_time
-		else:
-			prev_time=obj.time
-		prev=curr
-	return (True,break_hourss)
+    if len(times_all) == 0:
+        return False, 0
+    sign = times_all.first().out
+    times_in = times_all.filter(out=False)
+    times_out = times_all.filter(out=True)
+    if len(times_in) != len(times_out):
+        return False, 0
+    break_hours = 0
+    prev_time = times_all.first().time
+    prev_out = times_all.first().out
+    for obj in times_all:
+        current_out = obj.out
+        if current_out == prev_out:
+            return False, 0        
+        if current_out:
+            to_time = obj.time
+            break_hours += (to_time - prev_time).total_seconds() / 3600.0
+        else:
+            prev_time = obj.time        
+        prev_out = current_out    
+    return True, break_hours
+
 
 def convert_hours_to_hours_mins(hours):	
 	h=int(hours)
@@ -314,9 +322,9 @@ def this_week_emp_count_vs_date():
 		else:
 			emp_cnt_all.append(0)
 	df=pd.DataFrame()
-	df["date"]=str_dates_all
-	df["Number of employees"]=emp_cnt_all
-	sns.lineplot(data=df,x='date',y='Number of employees')
+	df["Date"]=str_dates_all
+	df["Number of Students"]=emp_cnt_all
+	sns.lineplot(data=df,x='Date',y='Number of Students')
 	plt.savefig('./recognition/static/recognition/img/attendance_graphs/this_week/1.png')
 	plt.close()
 
@@ -347,11 +355,12 @@ def last_week_emp_count_vs_date():
 		else:
 			emp_cnt_all.append(0)
 	df=pd.DataFrame()
-	df["date"]=str_dates_all
-	df["emp_count"]=emp_cnt_all
-	sns.lineplot(data=df,x='date',y='emp_count')
+	df["Date"]=str_dates_all
+	df["Number of Students"]=emp_cnt_all
+	sns.lineplot(data=df,x='Date',y='Number of Students')
 	plt.savefig('./recognition/static/recognition/img/attendance_graphs/last_week/1.png')
 	plt.close()
+
 
 def home(request):
 	return render(request, 'recognition/home.html')
@@ -397,65 +406,124 @@ def add_photos(request):
 			form=usernameForm()
 			return render(request,'recognition/add_photos.html', {'form' : form})
 
-def mark_your_attendance(request):		
-	detector = dlib.get_frontal_face_detector()
-	predictor = dlib.shape_predictor('face_recognition_data/shape_predictor_68_face_landmarks.dat')   #Add path to the shape predictor ######CHANGE TO RELATIVE PATH LATER
-	svc_save_path="face_recognition_data/svc.sav"	
-			
-	with open(svc_save_path, 'rb') as f:
-			svc = pickle.load(f)
-	fa = FaceAligner(predictor , desiredFaceWidth = 96)
-	encoder=LabelEncoder()
-	encoder.classes_ = np.load('face_recognition_data/classes.npy')
-	faces_encodings = np.zeros((1,128))
-	no_of_faces = len(svc.predict_proba(faces_encodings)[0])
-	count = dict()
-	present = dict()
-	log_time = dict()
-	start = dict()
-	for i in range(no_of_faces):
-		count[encoder.inverse_transform([i])[0]] = 0
-		present[encoder.inverse_transform([i])[0]] = False
-	vs = VideoStream(src=0).start()
-	sampleNum = 0
-	while(True):
-		frame = vs.read()
-		frame = imutils.resize(frame ,width = 800)
-		gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-		faces = detector(gray_frame,0)
-		for face in faces:
-			#print("INFO : inside for loop")
-			(x,y,w,h) = face_utils.rect_to_bb(face)
-			face_aligned = fa.align(frame,gray_frame,face)
-			cv2.rectangle(frame,(x,y),(x+w,y+h),(0,255,0),1)
-			(pred,prob)=predict(face_aligned,svc)
-			if(pred!=[-1]):				
-				person_name=encoder.inverse_transform(np.ravel([pred]))[0]
-				pred=person_name
-				if count[pred] == 0:
-					start[pred] = time.time()
-					count[pred] = count.get(pred,0) + 1
-				if count[pred] == 4 and (time.time()-start[pred]) > 1.2:
-					count[pred] = 0
-				else:
-				#if count[pred] == 4 and (time.time()-start) <= 1.5:
-					present[pred] = True
-					log_time[pred] = datetime.datetime.now()
-					count[pred] = count.get(pred,0) + 1
-					print(pred, present[pred], count[pred])
-				cv2.putText(frame, str(person_name)+ str(prob), (x+6,y+h-6), cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,255,0),1)
-			else:
-				person_name="unknown"
-				cv2.putText(frame, str(person_name), (x+6,y+h-6), cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,255,0),1)
-		cv2.imshow("Mark Attendance - In - Press q to exit",frame)
-		key=cv2.waitKey(1) & 0xFF
-		if(key==ord("q")):
-			break
-		
-	vs.stop()
-	cv2.destroyAllWindows()
-	update_attendance_in_db_in(present)
-	return redirect('home')
+#proxy detection code ~ mediapipe
+
+def eye_aspect_ratio(eye):
+    A = dist.euclidean(np.array([eye[1].x, eye[1].y]), np.array([eye[5].x, eye[5].y]))
+    B = dist.euclidean(np.array([eye[2].x, eye[2].y]), np.array([eye[4].x, eye[4].y]))
+    C = dist.euclidean(np.array([eye[0].x, eye[0].y]), np.array([eye[3].x, eye[3].y]))
+    ear = (A + B) / (2.0 * C)
+    return ear
+mp_hands = mp.solutions.hands
+mp_drawing = mp.solutions.drawing_utils
+
+def is_thumbs_up(landmarks):
+    thumb_tip = landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].y
+    thumb_mcp = landmarks.landmark[mp_hands.HandLandmark.THUMB_MCP].y
+    index_finger_mcp = landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_MCP].y
+    if thumb_tip < thumb_mcp and thumb_tip < index_finger_mcp:
+        return True
+    return False
+
+
+
+def mark_your_attendance(request):        
+    detector = dlib.get_frontal_face_detector()
+    predictor = dlib.shape_predictor('face_recognition_data/shape_predictor_68_face_landmarks.dat')
+    svc_save_path = "face_recognition_data/svc.sav"    
+
+    with open(svc_save_path, 'rb') as f:
+        svc = pickle.load(f)
+        
+    fa = FaceAligner(predictor, desiredFaceWidth=96)
+    encoder = LabelEncoder()
+    encoder.classes_ = np.load('face_recognition_data/classes.npy')    
+    faces_encodings = np.zeros((1, 128))
+    no_of_faces = len(svc.predict_proba(faces_encodings)[0])    
+    count = dict()
+    present = dict()
+    log_time = dict()
+    start = dict()
+    present_users = []
+
+    for i in range(no_of_faces):
+        count[encoder.inverse_transform([i])[0]] = 0
+        present[encoder.inverse_transform([i])[0]] = False
+        
+    vs = VideoStream(src=0).start()
+    sampleNum = 0
+    blink_detected = False
+    
+    with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.7) as hands:
+        while True:
+            frame = vs.read()
+            frame = imutils.resize(frame, width=800)
+            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            faces = detector(gray_frame, 0)
+            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+
+
+            for face in faces:
+                (x, y, w, h) = face_utils.rect_to_bb(face)
+                face_aligned = fa.align(frame, gray_frame, face)
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
+                (pred, prob) = predict(face_aligned, svc)
+                
+                if pred != [-1]:                
+                    person_name = encoder.inverse_transform(np.ravel([pred]))[0]
+                    pred = person_name
+                    if count[pred] == 0:
+                        start[pred] = time.time()
+                        count[pred] = count.get(pred, 0) + 1
+                    
+                    if count[pred] == 4 and (time.time() - start[pred]) > 1.2:
+                        count[pred] = 0
+                    else:
+                        present[pred] = True
+                        log_time[pred] = datetime.datetime.now()
+                        count[pred] = count.get(pred, 0) + 1
+                        print(pred, present[pred], count[pred])
+                        
+                        if person_name not in present_users:
+                            present_users.append(person_name)
+
+                    cv2.putText(frame, str(person_name) + str(prob), (x + 6, y + h - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+                else:
+                    person_name = "unknown"
+                    cv2.putText(frame, str(person_name), (x + 6, y + h - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+                    
+                landmarks = predictor(gray_frame, face)
+                leftEye = [landmarks.part(i) for i in range(36, 42)]
+                rightEye = [landmarks.part(i) for i in range(42, 48)]
+                leftEAR = eye_aspect_ratio(leftEye)
+                rightEAR = eye_aspect_ratio(rightEye)
+                ear = (leftEAR + rightEAR) / 2.0
+                
+                if ear < 0.25:
+                    blink_detected = True
+
+            results = hands.process(rgb_frame)
+            if results.multi_hand_landmarks and blink_detected:
+                for hand_landmarks in results.multi_hand_landmarks:
+                    mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+                    if is_thumbs_up(hand_landmarks):
+                        update_attendance_in_db_in(present)
+                        
+            cv2.imshow("Mark Attendance - Press q to exit", frame)
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord("q"):
+                break
+                
+    vs.stop()
+    cv2.destroyAllWindows()
+
+    for user in present_users:
+        messages.success(request, f'{user} marked present successfully!')
+
+    update_attendance_in_db_out(present)
+    return redirect('home')
+    
 
 def mark_your_attendance_out(request):
 	detector = dlib.get_frontal_face_detector()	
@@ -514,6 +582,7 @@ def mark_your_attendance_out(request):
 	cv2.destroyAllWindows()
 	update_attendance_in_db_out(present)
 	return redirect('home')
+ 
 
 @login_required
 def train(request):

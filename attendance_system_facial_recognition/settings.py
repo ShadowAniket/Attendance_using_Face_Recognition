@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '4!of@+5)(cu6!@c&21m644*%n5)h(9h6shzgg5ka%005e=04qu'
+SECRET_KEY = 'r-oc0=!w3-om27i)0ba-cd43b8fbs_q9#so&)%geb8&#!_1y5s'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -96,8 +96,9 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
     },
-    #{
-    #    'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',},
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },

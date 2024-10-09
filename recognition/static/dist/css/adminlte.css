@@ -399,6 +399,17 @@ h6, .h6 {
   font-weight: 300;
 }
 
+/*.alert-container and .alert code added*/
+.alert-container {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.alert {
+  font-weight: bold;
+  border-radius: 5px;
+}
+
 .display-1 {
   font-size: 6rem;
   font-weight: 300;
