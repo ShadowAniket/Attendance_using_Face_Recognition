@@ -14,7 +14,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
 
-    <title>Home Page</title>
+    <title>APSIT COLLEGE ATTENDANCE</title>
 
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="{% static 'plugins/fontawesome-free/css/all.min.css' %}" />
@@ -43,6 +43,13 @@
       .alert {
           margin: 20px 0;
       }
+      .guidelines {
+          background-color: #e9ecef;
+          padding: 15px;
+          border-radius: 5px;
+          margin-top: 20px;
+          text-align: left;
+      }
     </style>
   </head>
   <body class="hold-transition layout-top-nav">
@@ -52,13 +59,13 @@
         <div class="container">
           <a href="{% url 'home' %}" class="navbar-brand">
             <img src="{% static 'dist/img/apsit.jpeg' %}" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: 0.8" />
-            <span class="brand-text font-weight-light">A.P. Shah Institute of Technology </span>
+            <span class="brand-text font-weight-bold"><bold>A.P. Shah Institute of Technology</bold> </span>
           </a>
 
           <!-- Right navbar links -->
           <ul class="order-1 order-md-3 navbar-nav navbar-no-expand ml-auto">
             <li class="nav-item dropdown">
-              <a class="nav-link" href="{% url 'login2' %}">Login</a>
+              <a class="nav-link font-weight-bold" href="{% url 'login2' %}" ><bold>Login</bold></a>
             </li>
           </ul>
         </div>
@@ -88,22 +95,6 @@
                   </a>
                 </div>
               </div>
-      
-              <!-- Optionally add more info-boxes here -->
-              <!--
-              <div class="col-md-4 col-sm-6 col-12 mb-3">
-                <div class="info-box shadow">
-                  <a href="{% url 'mark-your-attendance-out' %}" class="d-flex align-items-center text-decoration-none">
-                    <span class="info-box-icon bg-info">
-                      <img src="{% static 'dist/img/cam_off.png' %}" alt="Close Attendance" class="img-fluid" />
-                    </span>
-                    <div class="info-box-content ml-3">
-                      <span class="info-box-text font-weight-bold">Close Attendance</span>
-                    </div>
-                  </a>
-                </div>
-              </div>
-              -->
             </div>
             <!-- /.row -->
           </div>
@@ -111,11 +102,20 @@
         </div>
         <!-- /.content-header -->
       
-        <!-- Main content -->
+        <!-- Camera Guidelines -->
         <div class="content">
           <div class="container">
-            <!-- Main content goes here -->
-          </div>
+            <div class="guidelines">
+              <h3>Camera Guidelines for Attendance Marking</h3>
+              <ul>
+                <li><strong>Ensure Proper Lighting:</strong> Make sure you are in a well-lit area to enhance the visibility of your face.</li>
+                <li><strong>Keep Your Face Centered:</strong> Position your face in the center of the camera frame for accurate recognition.</li>
+                <li><strong>Use Thumbs Up and Blink:</strong> Raise your thumb and blink during the attendance process. This helps confirm your presence and prevents proxy attendance.</li>
+                <li><strong>Maintain a Neutral Expression:</strong> Avoid excessive facial movements to ensure a clear capture of your facial features.</li>
+                <li><strong>Stay Still:</strong> Remain still while the camera captures your image to improve recognition accuracy.</li>
+              </ul>
+            </div>
+            
           <!-- /.container-fluid -->
         </div>
         <!-- /.content -->

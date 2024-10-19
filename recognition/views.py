@@ -96,6 +96,7 @@ def predict(face_aligned,svc,threshold=0.7):
 		return ([-1],prob[0][result[0]])
 	return (result[0],prob[0][result[0]])
 
+
 def vizualize_Data(embedded, targets,):	
 	X_embedded = TSNE(n_components=2).fit_transform(embedded)
 	for i, t in enumerate(set(targets)):
@@ -523,7 +524,7 @@ def mark_your_attendance(request):
 
     update_attendance_in_db_out(present)
     return redirect('home')
-    
+
 
 def mark_your_attendance_out(request):
 	detector = dlib.get_frontal_face_detector()	
@@ -586,49 +587,71 @@ def mark_your_attendance_out(request):
 
 @login_required
 def train(request):
-	if request.user.username!='admin':
-		return redirect('not-authorised')
-	training_dir='face_recognition_data/training_dataset'
-	count=0
-	for person_name in os.listdir(training_dir):
-		curr_directory=os.path.join(training_dir,person_name)
-		if not os.path.isdir(curr_directory):
-			continue
-		for imagefile in image_files_in_folder(curr_directory):
-			count+=1
-	X=[]
-	y=[]
-	i=0
-	for person_name in os.listdir(training_dir):
-		print(str(person_name))
-		curr_directory=os.path.join(training_dir,person_name)
-		if not os.path.isdir(curr_directory):
-			continue
-		for imagefile in image_files_in_folder(curr_directory):
-			print(str(imagefile))
-			image=cv2.imread(imagefile)
-			try:
-				X.append((face_recognition.face_encodings(image)[0]).tolist())
-				y.append(person_name)
-				i+=1
-			except:
-				print("removed")
-				os.remove(imagefile)
-	targets=np.array(y)
-	encoder = LabelEncoder()
-	encoder.fit(y)
-	y=encoder.transform(y)
-	X1=np.array(X)
-	print("shape: "+ str(X1.shape))
-	np.save('face_recognition_data/classes.npy', encoder.classes_)
-	svc = SVC(kernel='linear',probability=True)
-	svc.fit(X1,y)
-	svc_save_path="face_recognition_data/svc.sav"
-	with open(svc_save_path, 'wb') as f:
-		pickle.dump(svc,f)
-	vizualize_Data(X1,targets)
-	messages.success(request, f'Training Complete.')
-	return render(request,"recognition/train.html")
+    if request.user.username != 'admin':
+        return redirect('not-authorised')
+
+    training_dir = 'face_recognition_data/training_dataset'
+    count = 0
+    for person_name in os.listdir(training_dir):
+        curr_directory = os.path.join(training_dir, person_name)
+        if not os.path.isdir(curr_directory):
+            continue
+        for imagefile in image_files_in_folder(curr_directory):
+            count += 1
+
+    X = []
+    y = []
+
+    # Check if the model should be retrained
+    retrain = request.method == 'POST'
+
+    # If retraining, we skip loading the existing model
+    if not retrain:
+        svc_save_path = "face_recognition_data/svc.sav"
+        if os.path.exists(svc_save_path):
+            messages.success(request, 'Model already trained. Loading existing model.')
+            with open(svc_save_path, 'rb') as f:
+                svc = pickle.load(f)
+            return render(request, "recognition/train.html")  # Adjust as needed
+
+    # Training process
+    for person_name in os.listdir(training_dir):
+        print(str(person_name))
+        curr_directory = os.path.join(training_dir, person_name)
+        if not os.path.isdir(curr_directory):
+            continue
+        for imagefile in image_files_in_folder(curr_directory):
+            print(str(imagefile))
+            image = cv2.imread(imagefile)
+            try:
+                X.append((face_recognition.face_encodings(image)[0]).tolist())
+                y.append(person_name)
+            except Exception as e:
+                print(f"Error processing {imagefile}: {e}")
+                print("Removed invalid image.")
+                os.remove(imagefile)
+
+    targets = np.array(y)
+    encoder = LabelEncoder()
+    encoder.fit(y)
+    y = encoder.transform(y)
+    X1 = np.array(X)
+    print("Shape of training data: " + str(X1.shape))
+
+    # Save the classes and train the model
+    np.save('face_recognition_data/classes.npy', encoder.classes_)
+    svc = SVC(kernel='linear', probability=True)
+    svc.fit(X1, y)
+
+    # Save the trained model
+    with open("face_recognition_data/svc.sav", 'wb') as f:
+        pickle.dump(svc, f)
+
+    # Visualize the training data (optional)
+    vizualize_Data(X1, targets)
+
+    messages.success(request, 'Training Complete.')
+    return render(request, "recognition/train.html")
 
 @login_required
 def not_authorised(request):

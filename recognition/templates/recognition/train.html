@@ -2,16 +2,30 @@
 {% load static %}
 {% block content %}
   
-     <img src="{% static 'recognition/img/training_visualisation.png' %}" style="width:900px; margin-right: auto; margin-left: auto;"/>
+<div class="container text-center mt-5">
+    <h2 class="font-weight-bold mb-4">Model Training</h2>
+    <img src="{% static 'recognition/img/training_visualisation.png' %}" class="img-fluid mb-4" style="max-width: 100%; height: auto;"/>
+    
+    <form method="post" action="{% url 'train' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger btn-lg">Train Again</button>
+    </form>
+    <p class="mt-3">Click the button above to retrain the model with all available training data.</p>
+</div>
 
-    <div class="col-lg-12" style="padding-top: 100px;">
-    {% if messages %}
-         {% for message in messages%}
-         <div class="alert alert-{{message.tags}}" > {{message}}
-         </div>
-         {%endfor %}
-   
-    {%endif%}
-     </div>
+<div class="container">
+    <div class="col-lg-12 mt-4">
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
 
 {% endblock content %}
