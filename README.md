@@ -13,6 +13,7 @@
 ## Features
 - **Face Recognition**: Automatically recognize and record attendance based on facial images.
 - **Real-time Attendance**: Mark attendance as students or faculty members check in and out.
+- **Proxy Prevention**: Prevents proxies of user by various algorithms.
 - **Admin Panel**: Manage users, attendance records, and generate attendance reports.
 - **Secure and Efficient**: Reduces manual errors and ensures that attendance is recorded accurately.
 - **Responsive Web Interface**: Manage and view attendance data via a Django-based web interface.
