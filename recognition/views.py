@@ -445,7 +445,7 @@ def is_thumbs_up(landmarks):
 
 # Blink detection logic
 def is_blinking(ear_history, blink_threshold=0.25):
-    return sum(ear < blink_threshold for ear in ear_history) >= 5  # Adjust the threshold as needed
+    return sum(ear < blink_threshold for ear in ear_history) >= 3  # Adjust the threshold as needed
 def mark_your_attendance(request):
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor('face_recognition_data/shape_predictor_68_face_landmarks.dat')
@@ -499,7 +499,7 @@ def mark_your_attendance(request):
 
                     # Update EAR history
                     ear_history.append(ear)
-                    if len(ear_history) > 5:
+                    if len(ear_history) > 3:
                         ear_history.pop(0)
 
                     # Check if the person is blinking
