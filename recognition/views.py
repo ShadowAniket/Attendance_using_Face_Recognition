@@ -517,10 +517,13 @@ def mark_your_attendance(request):
                                         present[person_name] = True
                                         present_users.append(person_name)
 
-                                        # Update attendance in DB
+                                        # Update attendance in DB - marking IN
                                         if update_attendance_in_db_in({person_name: True}):
-                                            updated_users.append(person_name)
+                                            updated_users.append(person_name)  # Successful mark
                                             display_messages[person_name] = time.time()
+                                            update_attendance_in_db_in(present)
+                                        else:
+                                            print(f"Failed to mark {person_name} as present.")
 
                     # Display user name and probability
                     cv2.putText(frame, f"{person_name} {prob[0] * 100:.2f}%", (x + 6, y + h - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
@@ -542,10 +545,11 @@ def mark_your_attendance(request):
     # Show success messages in Django
     for user in updated_users:
         messages.success(request, f'{user} marked present successfully!')
-    
+
     update_attendance_in_db_out(present)
     
     return redirect('home')
+
 
 
 
