@@ -60,7 +60,7 @@
 ## Usage
 
 1. **Admin Panel Access**:
-   - Visit `http://127.0.0.1:8000/admin/` to log in as an admin and manage users and attendance records.
+   - Username- admin, Password- Shadow use this to log in as an admin and manage users and attendance records.
    
 2. **Attendance Capture**:
    - Use the web interface to capture faces through a connected camera.
