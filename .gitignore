@@ -5,3 +5,6 @@
 
 # Ignore build files
 /build/
+
+# Ignore backup files
+*.bak
