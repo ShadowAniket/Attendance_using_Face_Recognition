@@ -37,23 +37,27 @@ import math
 from scipy.spatial import distance as dist
 import mediapipe as mp
 
+#backend matplotlib mitigating interactive GUI risk
 mpl.use('Agg')
 
-
+#To check user exists in system by username
 def username_present(username):
 	if User.objects.filter(username=username).exists():
 		return True	
 	return False
 
+
 def create_dataset(username):
 	id = username
+	#checks if user exist logic --
 	if(os.path.exists('face_recognition_data/training_dataset/{}/'.format(id))==False):
 		os.makedirs('face_recognition_data/training_dataset/{}/'.format(id))
 	directory='face_recognition_data/training_dataset/{}/'.format(id)
-
+	#initialize face detection and shape predictor --
 	detector = dlib.get_frontal_face_detector()
 	predictor = dlib.shape_predictor('face_recognition_data/shape_predictor_68_face_landmarks.dat')   #Add path to the shape predictor ######CHANGE TO RELATIVE PATH LATER
 	fa = FaceAligner(predictor , desiredFaceWidth = 96)
+	
 	vs = VideoStream(src=0).start()
 	#time.sleep(2.0) ####CHECK######
 	sampleNum = 0
@@ -114,13 +118,21 @@ def update_attendance_in_db_in(present):
     time = datetime.datetime.now()
     
     for person in present:
-        user = User.objects.get(username=person)
-        
         try:
+            # Try to find the user in the database
+            user = User.objects.get(username=person)
+        except User.DoesNotExist:
+            # Handle the case where the user is not found
+            print(f"User '{person}' does not exist in the database.")
+            return False  # Returning False on failure to update DB
+
+        try:
+            # Check if attendance for this user on this date already exists
             qs = Present.objects.get(user=user, date=today)
         except Present.DoesNotExist:
             qs = None
             
+        # If attendance record does not exist, create one
         if qs is None:
             if present[person] == True:
                 a = Present(user=user, date=today, present=True)
@@ -129,14 +141,17 @@ def update_attendance_in_db_in(present):
                 a = Present(user=user, date=today, present=False)
                 a.save()
         else:
+            # If attendance record exists, update the 'present' status
             if present[person] == True:
                 qs.present = True
                 qs.save(update_fields=['present'])
-                
+
+        # Log the time if the user is marked present
         if present[person] == True:
             a = Time(user=user, date=today, time=time, out=False)
             a.save()
-
+    
+    return True  #  True when successful
 
 
 
@@ -407,7 +422,9 @@ def add_photos(request):
 			form=usernameForm()
 			return render(request,'recognition/add_photos.html', {'form' : form})
 
+
 #proxy detection code ~ mediapipe
+
 
 def eye_aspect_ratio(eye):
     A = dist.euclidean(np.array([eye[1].x, eye[1].y]), np.array([eye[5].x, eye[5].y]))
@@ -415,46 +432,45 @@ def eye_aspect_ratio(eye):
     C = dist.euclidean(np.array([eye[0].x, eye[0].y]), np.array([eye[3].x, eye[3].y]))
     ear = (A + B) / (2.0 * C)
     return ear
+
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 
+# Check if a thumbs up is detected
 def is_thumbs_up(landmarks):
     thumb_tip = landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].y
     thumb_mcp = landmarks.landmark[mp_hands.HandLandmark.THUMB_MCP].y
     index_finger_mcp = landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_MCP].y
-    if thumb_tip < thumb_mcp and thumb_tip < index_finger_mcp:
-        return True
-    return False
+    return thumb_tip < thumb_mcp and thumb_tip < index_finger_mcp
 
-
-
-def mark_your_attendance(request):        
+# Blink detection logic
+def is_blinking(ear_history, blink_threshold=0.25):
+    return sum(ear < blink_threshold for ear in ear_history) >= 5  # Adjust the threshold as needed
+def mark_your_attendance(request):
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor('face_recognition_data/shape_predictor_68_face_landmarks.dat')
-    svc_save_path = "face_recognition_data/svc.sav"    
+    svc_save_path = "face_recognition_data/svc.sav"
 
     with open(svc_save_path, 'rb') as f:
         svc = pickle.load(f)
-        
+
     fa = FaceAligner(predictor, desiredFaceWidth=96)
     encoder = LabelEncoder()
-    encoder.classes_ = np.load('face_recognition_data/classes.npy')    
-    faces_encodings = np.zeros((1, 128))
-    no_of_faces = len(svc.predict_proba(faces_encodings)[0])    
-    count = dict()
-    present = dict()
-    log_time = dict()
-    start = dict()
-    present_users = []
+    encoder.classes_ = np.load('face_recognition_data/classes.npy')
 
-    for i in range(no_of_faces):
-        count[encoder.inverse_transform([i])[0]] = 0
-        present[encoder.inverse_transform([i])[0]] = False
-        
+    # Initialize attendance and blink tracking
+    count = {encoder.inverse_transform([i])[0]: 0 for i in range(len(encoder.classes_))}
+    present = {encoder.inverse_transform([i])[0]: False for i in range(len(encoder.classes_))}
+    present_users = []
+    updated_users = []
+
+    blink_counter = 0  # Counter for blinks to activate hand detection
+    blink_threshold = 5  # Set threshold for required blinks
+    ear_history = []  # To store recent EAR values
+    display_messages = {}  # Store display messages for OpenCV
+
     vs = VideoStream(src=0).start()
-    sampleNum = 0
-    blink_detected = False
-    
+
     with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.7) as hands:
         while True:
             frame = vs.read()
@@ -463,67 +479,74 @@ def mark_your_attendance(request):
             faces = detector(gray_frame, 0)
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-
-
             for face in faces:
                 (x, y, w, h) = face_utils.rect_to_bb(face)
                 face_aligned = fa.align(frame, gray_frame, face)
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
                 (pred, prob) = predict(face_aligned, svc)
-                
-                if pred != [-1]:                
+
+                if pred != [-1]:
                     person_name = encoder.inverse_transform(np.ravel([pred]))[0]
-                    pred = person_name
-                    if count[pred] == 0:
-                        start[pred] = time.time()
-                        count[pred] = count.get(pred, 0) + 1
-                    
-                    if count[pred] == 4 and (time.time() - start[pred]) > 1.2:
-                        count[pred] = 0
-                    else:
-                        present[pred] = True
-                        log_time[pred] = datetime.datetime.now()
-                        count[pred] = count.get(pred, 0) + 1
-                        print(pred, present[pred], count[pred])
-                        
-                        if person_name not in present_users:
-                            present_users.append(person_name)
+                    count[person_name] += 1
 
-                    cv2.putText(frame, str(person_name) + str(prob), (x + 6, y + h - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+                    # Blink detection
+                    landmarks = predictor(gray_frame, face)
+                    leftEye = [landmarks.part(i) for i in range(36, 42)]
+                    rightEye = [landmarks.part(i) for i in range(42, 48)]
+                    leftEAR = eye_aspect_ratio(leftEye)
+                    rightEAR = eye_aspect_ratio(rightEye)
+                    ear = (leftEAR + rightEAR) / 2.0
+
+                    # Update EAR history
+                    ear_history.append(ear)
+                    if len(ear_history) > 5:
+                        ear_history.pop(0)
+
+                    # Check if the person is blinking
+                    if is_blinking(ear_history):
+                        blink_counter += 1
+
+                    # Logic to mark attendance only after enough blinks and thumbs up
+                    if blink_counter >= blink_threshold:
+                        results = hands.process(rgb_frame)
+                        if results.multi_hand_landmarks:
+                            for hand_landmarks in results.multi_hand_landmarks:
+                                mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+                                if is_thumbs_up(hand_landmarks):
+                                    if not present[person_name]:  # Only mark if not already marked
+                                        present[person_name] = True
+                                        present_users.append(person_name)
+
+                                        # Update attendance in DB
+                                        if update_attendance_in_db_in({person_name: True}):
+                                            updated_users.append(person_name)
+                                            display_messages[person_name] = time.time()
+
+                    # Display user name and probability
+                    cv2.putText(frame, f"{person_name} {prob[0] * 100:.2f}%", (x + 6, y + h - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
                 else:
-                    person_name = "unknown"
-                    cv2.putText(frame, str(person_name), (x + 6, y + h - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
-                    
-                landmarks = predictor(gray_frame, face)
-                leftEye = [landmarks.part(i) for i in range(36, 42)]
-                rightEye = [landmarks.part(i) for i in range(42, 48)]
-                leftEAR = eye_aspect_ratio(leftEye)
-                rightEAR = eye_aspect_ratio(rightEye)
-                ear = (leftEAR + rightEAR) / 2.0
-                
-                if ear < 0.25:
-                    blink_detected = True
+                    cv2.putText(frame, "unknown", (x + 6, y + h - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
-            results = hands.process(rgb_frame)
-            if results.multi_hand_landmarks and blink_detected:
-                for hand_landmarks in results.multi_hand_landmarks:
-                    mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-                    if is_thumbs_up(hand_landmarks):
-                        update_attendance_in_db_in(present)
-                        
+            # Display messages for users marked present
+            for idx, person_name in enumerate(updated_users):
+                cv2.putText(frame, f"{person_name} marked present", (50, 50 + idx * 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+
             cv2.imshow("Mark Attendance - Press q to exit", frame)
             key = cv2.waitKey(1) & 0xFF
             if key == ord("q"):
                 break
-                
+
     vs.stop()
     cv2.destroyAllWindows()
 
-    for user in present_users:
+    # Show success messages in Django
+    for user in updated_users:
         messages.success(request, f'{user} marked present successfully!')
-
+    
     update_attendance_in_db_out(present)
+    
     return redirect('home')
+
 
 
 def mark_your_attendance_out(request):

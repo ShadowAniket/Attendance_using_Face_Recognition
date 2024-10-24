@@ -1,11 +1,20 @@
 {% load static %}
 {% if messages %}
-    <div class="alert-container">
+    <div class="alert-container" id="message">
         {% for message in messages %}
             <div class="alert alert-success">{{ message }}</div>
         {% endfor %}
     </div>
 {% endif %}
+
+<script type="text/javascript">
+    setTimeout(function() {
+        let messages = document.getElementById('message');
+        if (messages) {
+            messages.style.display = 'none';
+        }
+    }, 15000);  // 15 seconds
+</script>
 
 <!DOCTYPE html>
 <html lang="en">
