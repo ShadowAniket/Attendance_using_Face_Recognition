@@ -1,6 +1,6 @@
 # Attendance Management System Using Face Recognition
 
-**Attendance Using Face Recognition** is a Python-based project that automates attendance tracking in educational institutions using facial recognition technology. This system offers a fast, secure, and efficient way to manage attendance records for both students and staff members.
+**Attendance Using Face Recognition** is a Python-based project that automates attendance tracking in educational institutions and corporate offices using facial recognition technology. This system offers a fast, secure, and efficient way to manage attendance records for both students and staff members.
 
 ## Table of Contents
 - [Features](#features)
@@ -68,6 +68,9 @@
 
 3. **Generating Reports**:
    - Use the admin panel to generate and download attendance reports filtered by date, user, or department.
+
+## Updates
+The plugins folder has been removed, and the JavaScript files have been made available online to streamline the project and reduce unnecessary files. This will not affect offline functionality of face recognition and attendance marking. Only html files may require online connectivity to load javascript files.
 
 ## Contributing
 
