@@ -69,6 +69,10 @@
 3. **Generating Reports**:
    - Use the admin panel to generate and download attendance reports filtered by date, user, or department.
 
+4. **Reference Videos**:
+   - https://www.linkedin.com/posts/aniket-asawale-242612270_hacktoberfest-facialrecognition-ai-activity-7255564518192242688-sBYB?utm_source=share&utm_medium=member_desktop&rcm=ACoAAEJMZ9IB3NSzWomYiXhvBevdNIDQo-qOCWA
+   - https://www.linkedin.com/posts/aniket-asawale-242612270_facerecognition-attendancesystem-opensource-activity-7255107631235670019-YgI9?utm_source=social_share_send&utm_medium=member_desktop_web&rcm=ACoAAEJMZ9IB3NSzWomYiXhvBevdNIDQo-qOCWA
+
 ## Updates
 The plugins folder has been removed, and the JavaScript files have been made available online to streamline the project and reduce unnecessary files. This will not affect offline functionality of face recognition and attendance marking. Only html files may require online connectivity to load javascript files.
 
